@@ -1,0 +1,49 @@
+{
+  "name": "huseyinfiliz/private-profile",
+  "description": "The Flarum extension that allows users to private their profiles.",
+  "keywords": [
+    "flarum",
+    "private",
+    "profile",
+    "hide",
+    "users",
+    "privacy"
+  ],
+  "type": "flarum-extension",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Huseyin Filiz",
+      "email": "mysuperuser01@gmail.com"
+    }
+  ],
+  "homepage": "https://huseyinfiliz.com.tr/sosyal",
+  "support": {
+    "forum": "https://discuss.flarum.org/d/36967",
+    "issues": "https://github.com/huseyinfiliz/private-profile/issues",
+    "source": "https://github.com/huseyinfiliz/private-profile",
+    "docs": "https://discuss.flarum.org/d/36967"
+  },
+  "autoload": {
+    "psr-4": {
+      "huseyinfiliz\\PrivateProfile\\": "src/"
+    }
+  },
+  "require": {
+    "flarum/core": "^1.2.0",
+  },
+  "extra": {
+    "flarum-extension": {
+      "title": "Private Profile",
+      "category": "feature",
+      "icon": {
+        "name": "fas fa-user-secret",
+        "backgroundColor": "#3498db",
+        "color": "#ffffff"
+      }
+    },
+    "flagrow": {
+      "discuss": "https://discuss.flarum.org/d/36967"
+    }
+  },
+}
