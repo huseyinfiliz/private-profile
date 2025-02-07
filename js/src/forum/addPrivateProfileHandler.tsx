@@ -3,29 +3,31 @@ import UserPage from 'flarum/forum/components/UserPage';
 import app from 'flarum/forum/app';
 
 export default function () {
+  const style = document.createElement('style');
+  style.textContent = `.UserPage .Button-badge { display: none; }`;
+  document.body.appendChild(style);
+
   extend(UserPage.prototype, 'onupdate', function () {
-    if (!this.user || this.user.attribute('privateProfile') !== true) return;
-
-    const isCurrentUser = app.session.user?.id() === this.user.id();
+    const isPrivateProfile = this.user?.attribute('privateProfile') === true;
+    const isCurrentUser = app.session.user?.id() === this.user?.id();
     const isAdmin = app.session.user?.isAdmin();
-    if (isCurrentUser || isAdmin) return;
+    const isUnauthorizedViewer = isPrivateProfile && !isCurrentUser && !isAdmin;
 
-    const placeholderElement =
-      this.element.querySelector('.PostsUserPage .Placeholder') ||
-      this.element.querySelector('.DiscussionsUserPage .Placeholder');
-    if (placeholderElement) {
-      const pElement = placeholderElement.querySelector('p');
-      if (pElement) {
-        pElement.textContent = app.translator.trans('huseyinfiliz-private-profile.forum.profile_is_private');
-        pElement.classList.add('private-profile-message');
-      }
-    }
+    if (!isUnauthorizedViewer) {
+      style.textContent = '';
+    } else {
+      style.textContent = `.UserPage .Button-badge { display: none; }`;
 
-    const dropdownMenu = this.element.querySelector('.Dropdown-menu.dropdown-menu');
-    if (dropdownMenu) {
-      dropdownMenu.querySelectorAll('.Button-badge').forEach(badge => {
+      const badgeElements = this.element.querySelectorAll('.Button-badge');
+      badgeElements.forEach(badge => {
         badge.textContent = '';
       });
+
+      const placeholderElement = this.element.querySelector('.PostsUserPage .Placeholder, .DiscussionsUserPage .Placeholder');
+
+      if (placeholderElement?.querySelector('p')) {
+        placeholderElement.querySelector('p').textContent = app.translator.trans('huseyinfiliz-private-profile.forum.profile_is_private');
+      }
     }
   });
 }
