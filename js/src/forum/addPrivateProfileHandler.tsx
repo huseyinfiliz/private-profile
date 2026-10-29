@@ -19,7 +19,7 @@ export default function () {
       style.textContent = `.UserPage .Button-badge { display: none; }`;
 
       const badgeElements = this.element.querySelectorAll('.Button-badge');
-      badgeElements.forEach(badge => {
+      badgeElements.forEach((badge) => {
         badge.textContent = '';
       });
 

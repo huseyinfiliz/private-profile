@@ -8,25 +8,28 @@ export default function () {
     items.add(
       'PrivateProfile',
       m('.Form-group', [
-        m('label.SettingsPage-PrivateProfile-label', 
+        m(
+          'label.SettingsPage-PrivateProfile-label',
           app.translator.trans('huseyinfiliz-private-profile.forum.user.settings.private_profile_heading')
         ),
         m('.PrivateProfile-setting', [
-          m(Switch, {
-            state: this.user.preferences().PrivateProfile,
-            onchange: (value) => {
-              this.PrivateProfileLoading = true;
-              this.user.savePreferences({ PrivateProfile: value }).then(() => {
-                this.PrivateProfileLoading = false;
-                m.redraw();
-              });
+          m(
+            Switch,
+            {
+              state: this.user.preferences().PrivateProfile,
+              onchange: (value) => {
+                this.PrivateProfileLoading = true;
+                this.user.savePreferences({ PrivateProfile: value }).then(() => {
+                  this.PrivateProfileLoading = false;
+                  m.redraw();
+                });
+              },
+              loading: this.PrivateProfileLoading,
             },
-            loading: this.PrivateProfileLoading,
-          }, app.translator.trans('huseyinfiliz-private-profile.forum.user.settings.private_profile_description'))
+            app.translator.trans('huseyinfiliz-private-profile.forum.user.settings.private_profile_description')
+          ),
         ]),
-        m('.helpText', 
-          app.translator.trans('huseyinfiliz-private-profile.forum.user.settings.private_profile_help')
-        )
+        m('.helpText', app.translator.trans('huseyinfiliz-private-profile.forum.user.settings.private_profile_help')),
       ])
     );
   });
