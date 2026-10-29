@@ -105,6 +105,7 @@ GitHub Actions runs the official Flarum reusable workflows for pushes and pull r
 
 - **Private Profile JS** checks Prettier and TypeScript, then builds the frontend with Yarn and Node 20. On a `2.x` push, the official build action commits changed distribution files as **flarum-bot**. Pull requests only check/build the code.
 - **Private Profile PHP** runs the integration scenarios in an isolated Flarum installation across PHP 8.3–8.5, MySQL, MariaDB, PostgreSQL and SQLite, including prefixed tables.
+- **Private Profile 1.x upgrade** installs Flarum 1.8.13 with the published Private Profile v1.1 source, creates public/private/unconfigured profiles and existing content, then upgrades the same database to Flarum 2.0.2 with the current extension. Both plain and prefixed tables are covered. The checks verify that the extension stays enabled, stored preferences and content survive, access remains correct, and the new privacy switch works with migrated users.
 - `.styleci.yml` uses the same PHP style configuration as the other Flarum 2 extensions.
 
 For a local isolated SQLite run:
@@ -124,6 +125,18 @@ FLARUM_ROOT=/path/to/flarum php tests/integration.php
 ```
 
 The suite covers both control modes, privacy audiences, forced access and API write restrictions, preference preservation across mode changes, selected/unselected tabs, discovery validation, server-controlled API coverage, profile information, roles, bypass groups and legacy preferences/settings. Database fixtures and settings are rolled back at the end.
+
+### Upgrading a Flarum 1.x installation
+
+Update the extension constraint together with the Flarum core constraint so Composer can select the 2.x-compatible extension. While 2.x is a development branch:
+
+```sh
+composer require flarum/core:^2.0 huseyinfiliz/private-profile:2.x-dev --with-all-dependencies
+php flarum migrate
+php flarum cache:clear
+```
+
+The upgrade workflow in `.github/workflows/upgrade.yml` is a reproducible example using a disposable installation and database. Its `tests/upgrade/prepare.php` and `verify.php` scripts also support local runs through `PRIVATE_PROFILE_UPGRADE_ROOT`, `PRIVATE_PROFILE_LEGACY_PATH` and the `DB_*` environment variables.
 
 ## Links
 

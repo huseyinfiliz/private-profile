@@ -1,0 +1,77 @@
+name: Private Profile 1.x upgrade
+
+on:
+  push:
+    branches: [2.x]
+  pull_request:
+    branches: [2.x]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  upgrade:
+    name: Flarum 1.8.13 to 2.0.2 (${{ matrix.label }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: plain tables
+            prefix: ''
+          - label: prefixed tables
+            prefix: upg_
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_DATABASE: private_profile_upgrade
+          MARIADB_USER: flarum
+          MARIADB_PASSWORD: password
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306/tcp
+        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      PRIVATE_PROFILE_UPGRADE_ROOT: ${{ github.workspace }}/.upgrade-fixture
+      PRIVATE_PROFILE_LEGACY_PATH: ${{ github.workspace }}/legacy-extension
+      DB_HOST: 127.0.0.1
+      DB_DATABASE: private_profile_upgrade
+      DB_USERNAME: flarum
+      DB_PASSWORD: password
+      DB_PREFIX: ${{ matrix.prefix }}
+      COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: v1.1
+          path: legacy-extension
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          coverage: none
+          extensions: curl, dom, fileinfo, gd, json, mbstring, openssl, pdo_mysql, tokenizer, zip
+          tools: composer:v2
+      - name: Configure isolated database port
+        run: echo "DB_PORT=${{ job.services.mariadb.ports['3306'] }}" >> "$GITHUB_ENV"
+      - name: Prepare Flarum 1.x fixture
+        run: php tests/upgrade/prepare.php legacy
+      - name: Install Flarum 1.x and legacy extension
+        working-directory: ${{ env.PRIVATE_PROFILE_UPGRADE_ROOT }}
+        run: |
+          composer install --no-interaction --no-progress
+          php flarum install --file=install.json --no-interaction
+      - name: Create and verify legacy profile data
+        run: php tests/upgrade/verify.php legacy
+      - name: Switch Composer to Flarum 2.0.2 and current extension
+        run: php tests/upgrade/prepare.php current
+      - name: Upgrade the same installation and database
+        working-directory: ${{ env.PRIVATE_PROFILE_UPGRADE_ROOT }}
+        run: |
+          composer update --with-all-dependencies --no-interaction --no-progress
+          php flarum migrate --no-interaction
+          php flarum cache:clear --quiet
+      - name: Verify migrated data and profile visibility
+        run: php tests/upgrade/verify.php current

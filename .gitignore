@@ -4,3 +4,5 @@
 /js/dist-typings/
 /tests/integration/tmp/
 /.php-cs-fixer.cache
+/.upgrade-fixture/
+/legacy-extension/
