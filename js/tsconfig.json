@@ -4,7 +4,7 @@
   // This will match all .ts, .tsx, .d.ts, .js, .jsx files in your `src` folder
   // and also tells your Typescript server to read core's global typings for
   // access to `dayjs` and `$` in the global namespace.
-  "include": ["src/**/*", "../vendor/*/*/js/dist-typings/@types/**/*"],
+  "include": ["src/**/*", "../vendor/*/*/js/dist-typings/@types/**/*", "../../../vendor/flarum/core/js/dist-typings/@types/**/*"],
   "compilerOptions": {
     // Only load the type packages the code imports, not every one in
     // node_modules, such as the @types/node webpack brings along.
@@ -13,7 +13,7 @@
     "declarationDir": "./dist-typings",
     "baseUrl": ".",
     "paths": {
-      "flarum/*": ["../vendor/flarum/core/js/dist-typings/*"]
+      "flarum/*": ["../vendor/flarum/core/js/dist-typings/*", "../../../vendor/flarum/core/js/dist-typings/*"]
     }
   }
 }

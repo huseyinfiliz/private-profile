@@ -2,45 +2,55 @@
 
 namespace huseyinfiliz\PrivateProfile\Middleware;
 
-use Flarum\User\UserRepository;
+use Flarum\Http\SlugManager;
+use Flarum\Http\RequestUtil;
+use Flarum\User\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Laminas\Diactoros\Response\JsonResponse;
 
 class CheckUserPrivateStatus implements MiddlewareInterface
 {
-    public function __construct(protected UserRepository $users)
+    public function __construct(protected SlugManager $slugManager)
     {
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $queryParams = $request->getQueryParams();
-        if (!isset($queryParams['filter']['author'])) {
+        if ($request->getMethod() !== 'GET' || !in_array($request->getAttribute('routeName'), ['posts.index', 'discussions.index'], true)) {
             return $handler->handle($request);
         }
 
-        $authorUsername = $queryParams['filter']['author'];
-        $profileOwner = $this->users->query()->where('username', $authorUsername)->first();
-        if (!$profileOwner) {
+        $authors = $request->getQueryParams()['filter']['author'] ?? null;
+        if (!is_string($authors) && !is_array($authors)) {
             return $handler->handle($request);
         }
 
-        $viewer = $request->getAttribute('actor');
-        if (
-            $profileOwner->getPreference('PrivateProfile', false) !== true ||
-            ($viewer && ($viewer->id === $profileOwner->id || $viewer->isAdmin()))
-        ) {
+        $viewer = RequestUtil::getActor($request);
+        if ($viewer->isAdmin()) {
             return $handler->handle($request);
         }
 
-        return $this->blockUserApiResponse();
-    }
+        // Match core's author filter, including comma-separated and array values.
+        foreach (is_array($authors) ? $authors : explode(',', $authors) as $slug) {
+            if (!is_string($slug)) {
+                continue;
+            }
 
-    protected function blockUserApiResponse(): JsonResponse
-    {
-        return new JsonResponse(['data' => []], 200);
+            try {
+                $profileOwner = $this->slugManager->forResource(User::class)->fromSlug(trim($slug, '"'), $viewer);
+            } catch (ModelNotFoundException) {
+                continue;
+            }
+
+            if ($profileOwner->getPreference('PrivateProfile', false) && $viewer->id !== $profileOwner->id) {
+                return new JsonResponse(['data' => []], 200);
+            }
+        }
+
+        return $handler->handle($request);
     }
 }

@@ -4,7 +4,8 @@ namespace huseyinfiliz\PrivateProfile;
 
 use Flarum\Extend;
 use Flarum\User\User;
-use Flarum\Api\Serializer\UserSerializer;
+use Flarum\Api\Resource\UserResource;
+use Flarum\Api\Schema;
 use Flarum\Api\Middleware\ThrottleApi;
 use huseyinfiliz\PrivateProfile\Middleware\CheckUserPrivateStatus;
 
@@ -21,9 +22,9 @@ return [
     (new Extend\User())
         ->registerPreference('PrivateProfile', 'boolval', false),
 
-    // @TODO: Replace with the new implementation https://docs.flarum.org/2.x/extend/api#extending-api-resources
-    (new Extend\ApiSerializer(UserSerializer::class))
-        ->attribute('privateProfile', function (UserSerializer $serializer, User $user) {
-            return $user->getPreference('PrivateProfile', false);
-        }),
+    (new Extend\ApiResource(UserResource::class))
+        ->fields(fn () => [
+            Schema\Boolean::make('privateProfile')
+                ->get(fn (User $user) => $user->getPreference('PrivateProfile', false)),
+        ]),
 ];

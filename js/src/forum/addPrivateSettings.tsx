@@ -1,37 +1,56 @@
-import app from 'flarum/forum/app';
-import { extend } from 'flarum/common/extend';
-// @TODO: SettingsPage is lazy loaded in 2.0, so this import is undefined until its chunk has loaded. Load it with `await import('flarum/forum/components/SettingsPage')` before using it. https://docs.flarum.org/2.x/extend/code-splitting
-import SettingsPage from 'flarum/forum/components/SettingsPage';
-import Switch from 'flarum/common/components/Switch';
+import app from "flarum/forum/app";
+import { extend } from "flarum/common/extend";
+import type SettingsPage from "flarum/forum/components/SettingsPage";
+import Switch from "flarum/common/components/Switch";
+
+type PrivateSettingsPage = SettingsPage & { privateProfileLoading?: boolean };
 
 export default function () {
-  extend('flarum/forum/components/SettingsPage', 'settingsItems', function (this: SettingsPage, items) {
-    items.add(
-      'PrivateProfile',
-      m('.Form-group', [
-        m(
-          'label.SettingsPage-PrivateProfile-label',
-          app.translator.trans('huseyinfiliz-private-profile.forum.user.settings.private_profile_heading')
-        ),
-        m('.PrivateProfile-setting', [
+  extend<PrivateSettingsPage, "settingsItems">(
+    "flarum/forum/components/SettingsPage",
+    "settingsItems",
+    function (items) {
+      items.add(
+        "PrivateProfile",
+        m(".Form-group", [
           m(
-            Switch,
-            {
-              state: this.user.preferences().PrivateProfile,
-              onchange: (value) => {
-                this.PrivateProfileLoading = true;
-                this.user.savePreferences({ PrivateProfile: value }).then(() => {
-                  this.PrivateProfileLoading = false;
-                  m.redraw();
-                });
+            "label.SettingsPage-PrivateProfile-label",
+            app.translator.trans(
+              "huseyinfiliz-private-profile.forum.user.settings.private_profile_heading",
+            ),
+          ),
+          m(".PrivateProfile-setting", [
+            m(
+              Switch,
+              {
+                state: this.user!.preferences()?.PrivateProfile ?? false,
+                onchange: (value: boolean) => {
+                  this.privateProfileLoading = true;
+                  this.user!.savePreferences({ PrivateProfile: value })
+                    .then(() => {
+                      this.user!.pushAttributes({ privateProfile: value });
+                    })
+                    .catch(() => {})
+                    .finally(() => {
+                      this.privateProfileLoading = false;
+                      m.redraw();
+                    });
+                },
+                loading: this.privateProfileLoading,
               },
-              loading: this.PrivateProfileLoading,
-            },
-            app.translator.trans('huseyinfiliz-private-profile.forum.user.settings.private_profile_description')
+              app.translator.trans(
+                "huseyinfiliz-private-profile.forum.user.settings.private_profile_description",
+              ),
+            ),
+          ]),
+          m(
+            ".helpText",
+            app.translator.trans(
+              "huseyinfiliz-private-profile.forum.user.settings.private_profile_help",
+            ),
           ),
         ]),
-        m('.helpText', app.translator.trans('huseyinfiliz-private-profile.forum.user.settings.private_profile_help')),
-      ])
-    );
-  });
+      );
+    },
+  );
 }
