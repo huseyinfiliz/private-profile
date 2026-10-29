@@ -136,8 +136,6 @@ php flarum migrate
 php flarum cache:clear
 ```
 
-The upgrade workflow in `.github/workflows/upgrade.yml` is a reproducible example using a disposable installation and database. Its `tests/upgrade/prepare.php` and `verify.php` scripts also support local runs through `PRIVATE_PROFILE_UPGRADE_ROOT`, `PRIVATE_PROFILE_LEGACY_PATH` and the `DB_*` environment variables.
-
 ## Links
 
 - [Discuss](https://discuss.flarum.org/d/36967)

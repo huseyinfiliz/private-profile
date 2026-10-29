@@ -38,7 +38,9 @@ file_put_contents($root.'/composer.json', json_encode($composer, JSON_PRETTY_PRI
 
 if ($phase === 'legacy') {
     file_put_contents($root.'/.private-profile-upgrade', 'disposable fixture');
-    file_put_contents($root.'/site.php', <<<'PHP'
+    file_put_contents(
+        $root.'/site.php',
+        <<<'PHP'
 <?php
 
 require __DIR__.'/vendor/autoload.php';
@@ -50,7 +52,9 @@ return Flarum\Foundation\Site::fromPaths([
 ]);
 PHP
     );
-    file_put_contents($root.'/flarum', <<<'PHP'
+    file_put_contents(
+        $root.'/flarum',
+        <<<'PHP'
 <?php
 
 $site = require __DIR__.'/site.php';

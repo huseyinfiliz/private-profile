@@ -89,8 +89,10 @@ if ($phase === 'legacy') {
         upgradeCheck($user->username === $entry['username'], 'Existing user IDs and names are preserved');
         upgradeCheck(storedUpgradePreferences($user) === $entry['preferences'], 'All stored preference values survive core migrations');
     }
-    upgradeCheck($container->make(SettingsRepositoryInterface::class)->get('huseyinfiliz-private-profile.visibility_mode') === null,
-        'No administrator override is introduced by the upgrade');
+    upgradeCheck(
+        $container->make(SettingsRepositoryInterface::class)->get('huseyinfiliz-private-profile.visibility_mode') === null,
+        'No administrator override is introduced by the upgrade'
+    );
 }
 
 $owner = User::findOrFail($state['users']['private']['id']);
@@ -103,16 +105,20 @@ foreach (['private', 'public', 'unset'] as $role) {
     upgradeCheck($profile['data']['attributes']['privateProfile'] === ($role === 'private'), "$phase/$role privacy flag");
     foreach (['posts', 'discussions'] as $resource) {
         $document = upgradeGet(new Guest, '/'.$resource, ['filter' => ['author' => $slug]]);
-        upgradeCheck($role === 'private' ? $document['data'] === [] : count($document['data']) > 0,
-            "$phase/$role/$resource guest access");
+        upgradeCheck(
+            $role === 'private' ? $document['data'] === [] : count($document['data']) > 0,
+            "$phase/$role/$resource guest access"
+        );
     }
 }
 $slug = $container->make(SlugManager::class)->forResource(User::class)->toSlug($owner);
 foreach (['owner' => $owner, 'admin' => $admin, 'member' => $viewer] as $role => $actor) {
     foreach (['posts', 'discussions'] as $resource) {
         $document = upgradeGet($actor, '/'.$resource, ['filter' => ['author' => $slug]]);
-        upgradeCheck($role === 'member' ? $document['data'] === [] : count($document['data']) > 0,
-            "$phase/private/$resource/$role access");
+        upgradeCheck(
+            $role === 'member' ? $document['data'] === [] : count($document['data']) > 0,
+            "$phase/private/$resource/$role access"
+        );
     }
 }
 
