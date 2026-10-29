@@ -2,13 +2,13 @@
 
 namespace huseyinfiliz\PrivateProfile;
 
+use Flarum\Api\Context;
+use Flarum\Api\Middleware\ThrottleApi;
+use Flarum\Api\Resource\ForumResource;
+use Flarum\Api\Resource\UserResource;
+use Flarum\Api\Schema;
 use Flarum\Extend;
 use Flarum\User\User;
-use Flarum\Api\Resource\UserResource;
-use Flarum\Api\Resource\ForumResource;
-use Flarum\Api\Context;
-use Flarum\Api\Schema;
-use Flarum\Api\Middleware\ThrottleApi;
 use huseyinfiliz\PrivateProfile\Middleware\CheckUserPrivateStatus;
 
 return [
@@ -20,7 +20,7 @@ return [
         ->js(__DIR__.'/js/dist/admin.js')
         ->css(__DIR__.'/less/admin.less'),
 
-    (new Extend\Locales(__DIR__.'/locale')),
+    new Extend\Locales(__DIR__.'/locale'),
 
     (new Extend\Routes('api'))
         ->post('/private-profile/tabs/discover', 'private-profile.tabs.discover', Api\DiscoverProfileTabsController::class),

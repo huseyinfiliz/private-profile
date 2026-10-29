@@ -23,7 +23,7 @@ class ProfileTabRegistry
     {
         $tabs = [];
         foreach (VisibilityResolver::TABS as $id => [$path, $extension]) {
-            if (!$extension || $this->extensions->isEnabled($extension)) {
+            if (! $extension || $this->extensions->isEnabled($extension)) {
                 $tabs[$path] = [
                     'id' => $id,
                     'path' => $path,
@@ -35,11 +35,11 @@ class ProfileTabRegistry
 
         $discovered = json_decode((string) $this->settings->get(self::SETTING, '[]'), true);
         foreach (is_array($discovered) ? $discovered : [] as $entry) {
-            if (!is_array($entry) || !$this->validPath($entry['path'] ?? null)) {
+            if (! is_array($entry) || ! $this->validPath($entry['path'] ?? null)) {
                 continue;
             }
             $path = $entry['path'];
-            if (!isset($tabs[$path])) {
+            if (! isset($tabs[$path])) {
                 $tabs[$path] = ['id' => self::automaticId($path), 'path' => $path, 'apiProtected' => false];
             }
             if (is_string($entry['label'] ?? null)) {
@@ -52,14 +52,14 @@ class ProfileTabRegistry
 
     public function discover(mixed $entries): array
     {
-        if (!is_array($entries) || count($entries) > 100) {
+        if (! is_array($entries) || count($entries) > 100) {
             throw new ValidationException(['tabs' => 'Expected at most 100 profile tabs.']);
         }
 
         $tabs = [];
         foreach ($entries as $entry) {
-            if (!is_array($entry) || !$this->validPath($entry['path'] ?? null)
-                || !is_string($entry['label'] ?? null) || mb_strlen($entry['label']) > 120) {
+            if (! is_array($entry) || ! $this->validPath($entry['path'] ?? null)
+                || ! is_string($entry['label'] ?? null) || mb_strlen($entry['label']) > 120) {
                 throw new ValidationException(['tabs' => 'Invalid profile tab path or label.']);
             }
             // IDs and API coverage are determined here, never trusted from the browser.
@@ -74,7 +74,7 @@ class ProfileTabRegistry
     private function validPath(mixed $path): bool
     {
         return is_string($path) && strlen($path) <= 128
-            && !preg_match('~^/security(?:/|$)~', $path)
+            && ! preg_match('~^/security(?:/|$)~', $path)
             && ($path === '' || (bool) preg_match('~^/(?:[\p{L}\p{N}_:.\-]+/?)*$~uD', $path));
     }
 }

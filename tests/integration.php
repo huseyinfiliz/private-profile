@@ -1,7 +1,8 @@
 <?php
 
-// Run against a development forum. Every fixture and setting change is rolled back.
+// CI uses --isolated and Flarum's test installation. For a development forum:
 // FLARUM_ROOT=/path/to/flarum php tests/integration.php
+// Every scenario fixture and setting change is rolled back.
 
 use Flarum\Api\Client;
 use Flarum\Discussion\Discussion;
@@ -11,11 +12,20 @@ use Flarum\Post\CommentPost;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\User\Guest;
 use Flarum\User\User;
-use huseyinfiliz\PrivateProfile\VisibilityResolver;
 use huseyinfiliz\PrivateProfile\ProfileTabRegistry;
+use huseyinfiliz\PrivateProfile\VisibilityResolver;
 
-$root = getenv('FLARUM_ROOT') ?: dirname(__DIR__, 3);
-$container = (require $root.'/site.php')->bootApp()->getContainer();
+if (in_array('--isolated', $argv ?? [], true)) {
+    require __DIR__.'/bootstrap.php';
+    $bootstrapper = new Flarum\Testing\integration\Setup\Bootstrapper(
+        ['env' => 'testing'],
+        ['huseyinfiliz-private-profile']
+    );
+    $container = $bootstrapper->run()->bootApp()->getContainer();
+} else {
+    $root = getenv('FLARUM_ROOT') ?: dirname(__DIR__, 3);
+    $container = (require $root.'/site.php')->bootApp()->getContainer();
+}
 $db = $container->make('db')->connection();
 $api = $container->make(Client::class);
 $settings = $container->make(SettingsRepositoryInterface::class);
@@ -25,10 +35,10 @@ $checks = 0;
 function check(bool $condition, string $label): void
 {
     global $checks;
-    if (!$condition) {
+    if (! $condition) {
         throw new RuntimeException($label);
     }
-    $checks++;
+    ++$checks;
 }
 
 function apiGet(User $actor, string $path, array $query = []): array
@@ -40,9 +50,10 @@ function apiGet(User $actor, string $path, array $query = []): array
     return json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
 }
 
-function apiPreferences(User $user, array $preferences): \Psr\Http\Message\ResponseInterface
+function apiPreferences(User $user, array $preferences): Psr\Http\Message\ResponseInterface
 {
     global $api;
+
     return $api->withActor($user)->withQueryParams([])->withBody(['data' => [
         'type' => 'users', 'id' => (string) $user->id, 'attributes' => ['preferences' => $preferences],
     ]])->patch('/users/'.$user->id);
@@ -98,7 +109,7 @@ try {
     check(count($unknown) === 1 && $unknown[0]['apiProtected'] === false, 'Browser cannot claim API support for an unknown tab');
     $posts = array_values(array_filter($tabs, fn ($tab) => $tab['path'] === ''));
     check(count($posts) === 1 && $posts[0]['id'] === 'posts' && $posts[0]['apiProtected'] === true, 'Known tab IDs and API support remain server-controlled');
-    check(!$resolver->hidesTab($unknownId), 'Newly discovered tabs are not selected');
+    check(! $resolver->hidesTab($unknownId), 'Newly discovered tabs are not selected');
     $settings->set('huseyinfiliz-private-profile.hide_'.$unknownId, '1');
     check($resolver->hidesTab($unknownId), 'Discovered tabs can be selected');
     $api->withActor($users['admin'])->withBody(['tabs' => [['path' => '/third-party-test', 'label' => 'Renamed tab']]])->post($discoveryPath);
@@ -168,7 +179,7 @@ try {
     }
     $owner->setPreference('profileVisibility', 'everyone');
     $owner->save();
-    check(!$resolver->memberChoice($owner), 'Legacy public preference keeps privacy off');
+    check(! $resolver->memberChoice($owner), 'Legacy public preference keeps privacy off');
     $owner->setPreference('profileVisibility', 'default');
     $owner->setPreference('PrivateProfile', true);
     $owner->save();
@@ -256,8 +267,8 @@ try {
     if ($response->getStatusCode() !== 404) {
         check($response->getStatusCode() === 403, 'Direct Trader Feedback stats URL protected');
     }
-    if (class_exists(\HuseyinFiliz\Rewind\Model\RewindSnapshot::class)) {
-        $snapshot = new \HuseyinFiliz\Rewind\Model\RewindSnapshot;
+    if (class_exists(HuseyinFiliz\Rewind\Model\RewindSnapshot::class)) {
+        $snapshot = new HuseyinFiliz\Rewind\Model\RewindSnapshot;
         $snapshot->fill(['user_id' => $owner->id, 'year' => 2025, 'data' => ['privateProfileFixture' => true],
             'generated_at' => Carbon\Carbon::now(), 'is_public' => true]);
         $snapshot->save();
@@ -266,14 +277,14 @@ try {
         $response = $api->withActor($users['member'])->withQueryParams([])->get('/rw-snaps/'.$snapshot->id);
         check($response->getStatusCode() === 403, 'Direct Rewind snapshot URL protected despite Rewind moderation permission');
         $document = apiGet($users['member'], '/rw-snaps');
-        check(!in_array((string) $snapshot->id, array_column($document['data'], 'id'), true), 'Unfiltered Rewind list removes restricted snapshots');
+        check(! in_array((string) $snapshot->id, array_column($document['data'], 'id'), true), 'Unfiltered Rewind list removes restricted snapshots');
         $settings->set('huseyinfiliz-private-profile.hide_rewind', '0');
         $document = apiGet($users['member'], '/rw-snaps/'.$snapshot->id);
         check($document['data']['id'] === (string) $snapshot->id, 'Unselected Rewind tab retains its own access rules');
         $settings->set('huseyinfiliz-private-profile.hide_rewind', '1');
     }
-    if (class_exists(\HuseyinFiliz\TraderFeedback\Models\Feedback::class)) {
-        $feedback = new \HuseyinFiliz\TraderFeedback\Models\Feedback;
+    if (class_exists(HuseyinFiliz\TraderFeedback\Models\Feedback::class)) {
+        $feedback = new HuseyinFiliz\TraderFeedback\Models\Feedback;
         $feedback->fill(['from_user_id' => $users['member']->id, 'to_user_id' => $owner->id,
             'type' => 'positive', 'role' => 'buyer', 'comment' => 'Profile visibility integration fixture.', 'is_approved' => true]);
         $feedback->save();
@@ -282,7 +293,7 @@ try {
         $response = $api->withActor($users['member'])->withQueryParams([])->get('/trader/feedback/'.$feedback->id);
         check($response->getStatusCode() === 403, 'Direct feedback URL protected');
         $document = apiGet($users['member'], '/trader/feedback');
-        check(!in_array((string) $feedback->id, array_column($document['data'], 'id'), true), 'Unfiltered feedback list removes restricted profile feedback');
+        check(! in_array((string) $feedback->id, array_column($document['data'], 'id'), true), 'Unfiltered feedback list removes restricted profile feedback');
         $settings->set('huseyinfiliz-private-profile.hide_feedbacks', '0');
         $document = apiGet($users['member'], '/trader/feedback/'.$feedback->id);
         check($document['data']['id'] === (string) $feedback->id, 'Unselected feedback tab remains accessible');
@@ -303,8 +314,8 @@ try {
     $response = $api->withActor($owner)->withBody(['data' => ['type' => 'users', 'id' => (string) $owner->id,
         'attributes' => ['preferences' => ['profileVisibility' => 'invalid']]]])->patch('/users/'.$owner->id);
     check($response->getStatusCode() === 422, 'Invalid preference rejected');
-    print "PASS: $checks integration assertions on Flarum ".Flarum\Foundation\Application::VERSION."\n";
+    echo "PASS: $checks integration assertions on Flarum ".Flarum\Foundation\Application::VERSION."\n";
 } finally {
     $db->rollBack();
-    print "Fixtures and setting changes rolled back.\n";
+    echo "Fixtures and setting changes rolled back.\n";
 }

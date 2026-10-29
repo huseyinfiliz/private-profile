@@ -99,7 +99,25 @@ yarn format-check
 
 TypeScript resolves core typings from either an extension-local Composer installation or the surrounding Flarum workbench installation.
 
-Run the integration suite against a development forum with this extension enabled:
+### Automated checks and builds
+
+GitHub Actions runs the official Flarum reusable workflows for pushes and pull requests targeting `2.x`:
+
+- **Private Profile JS** checks Prettier and TypeScript, then builds the frontend with Yarn and Node 20. On a `2.x` push, the official build action commits changed distribution files as **flarum-bot**. Pull requests only check/build the code.
+- **Private Profile PHP** runs the integration scenarios in an isolated Flarum installation across PHP 8.3–8.5, MySQL, MariaDB, PostgreSQL and SQLite, including prefixed tables.
+- `.styleci.yml` uses the same PHP style configuration as the other Flarum 2 extensions.
+
+For a local isolated SQLite run:
+
+```sh
+composer install
+DB_DRIVER=sqlite composer test:setup
+composer test
+```
+
+`test:setup` installs into `tests/integration/tmp` and resets the configured test database. Use a dedicated test database when selecting another driver.
+
+The same integration scenarios can also run against a development forum with this extension enabled:
 
 ```sh
 FLARUM_ROOT=/path/to/flarum php tests/integration.php

@@ -33,6 +33,7 @@ class VisibilityResolver
     public function hiddenTabs(): array
     {
         $ids = array_unique([...array_keys(self::TABS), ...array_column($this->tabs->tabs(), 'id')]);
+
         return array_values(array_filter($ids, fn ($tab) => (bool) $this->settings->get(
             'huseyinfiliz-private-profile.hide_'.$tab,
             in_array($tab, ['posts', 'discussions'], true) ? '1' : '0'
@@ -51,7 +52,7 @@ class VisibilityResolver
 
     public static function validatePreference(mixed $value): string
     {
-        if (!in_array($value, ['default', ...self::LEVELS], true)) {
+        if (! in_array($value, ['default', ...self::LEVELS], true)) {
             throw new ValidationException(['profileVisibility' => 'Invalid profile visibility level.']);
         }
 
@@ -110,20 +111,20 @@ class VisibilityResolver
 
     public function canBypass(User $actor): bool
     {
-        return !$actor->isGuest() && ($actor->isAdmin()
+        return ! $actor->isGuest() && ($actor->isAdmin()
             || $actor->hasPermission(self::PERMISSION)
             || $actor->hasPermission('huseyinfiliz-private-profile-plus.bypassProfileVisibility'));
     }
 
     public function canView(User $owner, User $actor): bool
     {
-        if ((!$actor->isGuest() && $owner->id === $actor->id) || $this->canBypass($actor)) {
+        if ((! $actor->isGuest() && $owner->id === $actor->id) || $this->canBypass($actor)) {
             return true;
         }
 
         return match ($this->effective($owner)) {
             'everyone' => true,
-            'members' => !$actor->isGuest(),
+            'members' => ! $actor->isGuest(),
             default => false,
         };
     }

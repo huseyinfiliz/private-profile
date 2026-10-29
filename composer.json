@@ -33,6 +33,18 @@
     "php": "^8.3",
     "flarum/core": "^2.0.0"
   },
+  "require-dev": {
+    "flarum/testing": "^2.0.0"
+  },
+  "scripts": {
+    "test": "@test:integration",
+    "test:integration": "@php tests/integration.php --isolated",
+    "test:setup": "@php tests/integration/setup.php"
+  },
+  "scripts-descriptions": {
+    "test": "Run the integration scenarios against an isolated Flarum test installation.",
+    "test:setup": "Prepare the isolated test database; never use the forum database."
+  },
   "extra": {
     "flarum-extension": {
       "title": "Private Profile",

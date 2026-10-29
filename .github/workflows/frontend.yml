@@ -1,0 +1,29 @@
+name: Private Profile JS
+
+on:
+  push:
+    branches: [2.x]
+  pull_request:
+    branches: [2.x]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    uses: flarum/framework/.github/workflows/REUSABLE_frontend.yml@2.x
+    with:
+      enable_bundlewatch: false
+      enable_prettier: true
+      enable_typescript: true
+      format_script: format-check
+      check_typings_script: check-typings
+      type_coverage_script: ''
+      build_typings_script: ''
+      frontend_directory: ./js
+      backend_directory: .
+      js_package_manager: yarn
+      cache_dependency_path: ./js/yarn.lock
+      node_version: 20
+      main_git_branch: 2.x
