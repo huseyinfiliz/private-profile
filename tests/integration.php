@@ -38,7 +38,7 @@ function check(bool $condition, string $label): void
     if (! $condition) {
         throw new RuntimeException($label);
     }
-    ++$checks;
+    $checks++;
 }
 
 function apiGet(User $actor, string $path, array $query = []): array
@@ -190,7 +190,8 @@ try {
     $owner->setPreference('privateProfileEnabled', true);
     $owner->setPreference('profileVisibility', 'private');
     $owner->save();
-    $originalPrivacy = $owner->getRawOriginal('preferences');
+    // Read the stored representation: MySQL normalizes JSON when persisting it.
+    $originalPrivacy = $owner->fresh()->getRawOriginal('preferences');
     $settings->set(VisibilityResolver::MODE_SETTING, 'admin');
     foreach (VisibilityResolver::LEVELS as $level) {
         $settings->set(VisibilityResolver::SETTING, $level);
@@ -235,7 +236,7 @@ try {
         $settings->set(VisibilityResolver::AUDIENCE_SETTING, $audience);
         check($resolver->effective($owner) === $audience, "Member privacy follows the administrator's $audience scope");
     }
-    $beforeModes = $owner->getRawOriginal('preferences');
+    $beforeModes = $owner->fresh()->getRawOriginal('preferences');
     $settings->set(VisibilityResolver::MODE_SETTING, 'admin');
     $settings->set(VisibilityResolver::SETTING, 'everyone');
     check($resolver->effective($owner) === 'everyone', 'Administrator can make an opted-in member public');
