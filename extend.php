@@ -21,6 +21,7 @@ return [
     (new Extend\User())
         ->registerPreference('PrivateProfile', 'boolval', false),
 
+    // @TODO: Replace with the new implementation https://docs.flarum.org/2.x/extend/api#extending-api-resources
     (new Extend\ApiSerializer(UserSerializer::class))
         ->attribute('privateProfile', function (UserSerializer $serializer, User $user) {
             return $user->getPreference('PrivateProfile', false);
