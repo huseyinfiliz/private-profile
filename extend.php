@@ -2,10 +2,10 @@
 
 namespace huseyinfiliz\PrivateProfile;
 
+use Flarum\Api\Middleware\ThrottleApi;
+use Flarum\Api\Serializer\UserSerializer;
 use Flarum\Extend;
 use Flarum\User\User;
-use Flarum\Api\Serializer\UserSerializer;
-use Flarum\Api\Middleware\ThrottleApi;
 use huseyinfiliz\PrivateProfile\Middleware\CheckUserPrivateStatus;
 
 return [
@@ -13,7 +13,7 @@ return [
         ->js(__DIR__.'/js/dist/forum.js')
         ->css(__DIR__.'/less/forum.less'),
 
-    (new Extend\Locales(__DIR__.'/locale')),
+    new Extend\Locales(__DIR__.'/locale'),
 
     (new Extend\Middleware('api'))
         ->insertBefore(ThrottleApi::class, CheckUserPrivateStatus::class),
