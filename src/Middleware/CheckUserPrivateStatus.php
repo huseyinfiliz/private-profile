@@ -11,11 +11,8 @@ use Laminas\Diactoros\Response\JsonResponse;
 
 class CheckUserPrivateStatus implements MiddlewareInterface
 {
-    protected UserRepository $users;
-
-    public function __construct(UserRepository $users)
+    public function __construct(protected UserRepository $users)
     {
-        $this->users = $users;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
