@@ -60,6 +60,7 @@ function apiPreferences(User $user, array $preferences): Psr\Http\Message\Respon
 }
 
 $db->beginTransaction();
+
 try {
     $settings->set(VisibilityResolver::SETTING, 'everyone');
     $settings->set(VisibilityResolver::MODE_SETTING, 'member');
