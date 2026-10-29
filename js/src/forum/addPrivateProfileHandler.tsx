@@ -1,43 +1,63 @@
 import app from "flarum/forum/app";
 import { extend, override } from "flarum/common/extend";
-import Placeholder from "flarum/common/components/Placeholder";
+import DefaultResolver from "flarum/common/resolvers/DefaultResolver";
+import RestrictedProfilePage, {
+  restrictedView,
+} from "./components/RestrictedProfilePage";
+import type User from "flarum/common/models/User";
 import type UserPage from "flarum/forum/components/UserPage";
-
-function isPrivate(page: UserPage): boolean {
-  return (
-    page.user?.attribute<boolean>("privateProfile") === true &&
-    app.session.user?.id() !== page.user.id() &&
-    !app.session.user?.isAdmin()
-  );
-}
+import { isProtectedTab } from "./profileTabs";
+import type Mithril from "mithril";
 
 export default function () {
-  extend<UserPage, "view">(
-    "flarum/forum/components/UserPage",
-    "view",
-    function (vnode) {
-      if (isPrivate(this)) {
-        const attrs = vnode.attrs as { className?: string };
-        attrs.className = `${attrs.className || ""} UserPage--private`;
+  // Gate profile routes before the original page initializes or requests its tab data.
+  override(
+    DefaultResolver.prototype,
+    "onmatch",
+    async function (original, args, requestedPath, route) {
+      if (
+        /\/u\/:username(?:\/|$)/.test(route) &&
+        typeof args.username === "string" &&
+        isProtectedTab(requestedPath)
+      ) {
+        const user = await app.store.find<User>("users", args.username, {
+          bySlug: true,
+        });
+        if (user.attribute<boolean>("canViewProfile") === false)
+          return RestrictedProfilePage;
       }
+      return original(args, requestedPath, route);
     },
   );
 
-  for (const component of ["PostsUserPage", "DiscussionsUserPage"]) {
-    override<UserPage, "content">(
-      `flarum/forum/components/${component}`,
-      "content",
-      function (original) {
-        return isPrivate(this) ? (
-          <Placeholder
-            text={app.translator.trans(
-              "huseyinfiliz-private-profile.forum.profile_is_private",
-            )}
-          />
-        ) : (
-          original()
-        );
+  // Also cover UserPage subclasses routed through custom resolvers.
+  override<UserPage, "view">(
+    "flarum/forum/components/UserPage",
+    "view",
+    function (original) {
+      return this.user?.attribute<boolean>("canViewProfile") === false &&
+        isProtectedTab(m.route.get())
+        ? restrictedView(this)
+        : original();
+    },
+  );
+
+  app.beforeMount(() =>
+    extend<UserPage, "navItems">(
+      "flarum/forum/components/UserPage",
+      "navItems",
+      function (items) {
+        if (this.user?.attribute<boolean>("canViewProfile") !== false) return;
+        for (const item of items.toArray()) {
+          const vnode = item as Mithril.Vnode<{
+            href?: string;
+            className?: string;
+          }>;
+          if (vnode?.attrs?.href && isProtectedTab(vnode.attrs.href)) {
+            vnode.attrs.className = `${vnode.attrs.className || ""} PrivateProfile-restrictedTab`;
+          }
+        }
       },
-    );
-  }
+    ),
+  );
 }

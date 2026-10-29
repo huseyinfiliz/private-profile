@@ -1,7 +1,7 @@
 import app from "flarum/forum/app";
 import { extend } from "flarum/common/extend";
-import type SettingsPage from "flarum/forum/components/SettingsPage";
 import Switch from "flarum/common/components/Switch";
+import type SettingsPage from "flarum/forum/components/SettingsPage";
 
 type PrivateSettingsPage = SettingsPage & { privateProfileLoading?: boolean };
 
@@ -10,46 +10,55 @@ export default function () {
     "flarum/forum/components/SettingsPage",
     "settingsItems",
     function (items) {
+      const user = this.user;
+      if (
+        !user ||
+        app.forum.attribute<string>("profileVisibilityMode") === "admin"
+      )
+        return;
+
+      const audience =
+        app.forum.attribute<string>("profilePrivacyAudience") === "members"
+          ? "members"
+          : "private";
       items.add(
-        "PrivateProfile",
-        m(".Form-group", [
-          m(
-            "label.SettingsPage-PrivateProfile-label",
-            app.translator.trans(
+        "profileVisibility",
+        <div className="Form-group PrivateProfile-setting">
+          <label>
+            {app.translator.trans(
               "huseyinfiliz-private-profile.forum.user.settings.private_profile_heading",
-            ),
-          ),
-          m(".PrivateProfile-setting", [
-            m(
-              Switch,
-              {
-                state: this.user!.preferences()?.PrivateProfile ?? false,
-                onchange: (value: boolean) => {
-                  this.privateProfileLoading = true;
-                  this.user!.savePreferences({ PrivateProfile: value })
-                    .then(() => {
-                      this.user!.pushAttributes({ privateProfile: value });
-                    })
-                    .catch(() => {})
-                    .finally(() => {
-                      this.privateProfileLoading = false;
-                      m.redraw();
-                    });
-                },
-                loading: this.privateProfileLoading,
-              },
-              app.translator.trans(
-                "huseyinfiliz-private-profile.forum.user.settings.private_profile_description",
-              ),
-            ),
-          ]),
-          m(
-            ".helpText",
-            app.translator.trans(
-              "huseyinfiliz-private-profile.forum.user.settings.private_profile_help",
-            ),
-          ),
-        ]),
+            )}
+          </label>
+          <Switch
+            state={user.attribute<boolean>("privateProfileEnabled")}
+            disabled={this.privateProfileLoading}
+            loading={this.privateProfileLoading}
+            onchange={(value: boolean) => {
+              this.privateProfileLoading = true;
+              user
+                .savePreferences({ privateProfileEnabled: value })
+                .catch(() => {})
+                .finally(() => {
+                  this.privateProfileLoading = false;
+                  m.redraw();
+                });
+            }}
+          >
+            {app.translator.trans(
+              "huseyinfiliz-private-profile.forum.user.settings.private_profile_description",
+            )}
+          </Switch>
+          <div className="helpText">
+            {app.translator.trans(
+              `huseyinfiliz-private-profile.forum.user.settings.private_profile_help_${audience}`,
+            )}
+          </div>
+          <div className="helpText">
+            {app.translator.trans(
+              "huseyinfiliz-private-profile.forum.user.settings.private_profile_help_public",
+            )}
+          </div>
+        </div>,
       );
     },
   );

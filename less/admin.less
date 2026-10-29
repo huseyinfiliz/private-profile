@@ -1,0 +1,172 @@
+// Segmented tabs and cards follow the FoF Badges admin layout.
+.PrivateProfilePage {
+  width: 100%;
+  max-width: 1400px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 24px;
+
+  .PrivateProfile-form,
+  .PrivateProfile-form > .Form-body {
+    width: inherit;
+  }
+
+  .PrivateProfile-tabSettings > h3,
+  .PrivateProfile-generalSettings > h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .PrivateProfile-introduction {
+    margin: 0 0 20px;
+  }
+
+  .PrivateProfile-settingsHeader {
+    width: inherit;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .PrivateProfile-supportTabs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 8px;
+    background: var(--control-bg);
+
+    > .Button {
+      border: 0;
+      border-radius: 6px;
+      padding: 8px 16px;
+      background: transparent;
+      color: var(--muted-color);
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: none;
+      transition: background 150ms ease, color 150ms ease;
+
+      &:hover {
+        color: var(--text-color);
+        background: var(--body-bg);
+      }
+
+      &.active {
+        color: var(--primary-color);
+        background: var(--body-bg);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        font-weight: 700;
+      }
+
+      .icon { margin-right: 8px; }
+    }
+
+    .Button-badge {
+      margin-left: 8px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--primary-color);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+    }
+  }
+
+  .PrivateProfile-discovery {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .helpText { margin: 0; }
+  }
+
+  .PrivateProfile-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-inline-start: auto;
+  }
+
+  .PrivateProfile-saveControls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .PrivateProfile-generalSettings {
+    .Form-group { margin-bottom: 20px; }
+    .Form-group:last-child { margin-bottom: 0; }
+    .Select { max-width: 100%; }
+  }
+
+  .PrivateProfile-settingsContent {
+    padding: 24px;
+    border: 1px solid var(--control-bg);
+    border-radius: 8px;
+    background: var(--body-bg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .PrivateProfile-supportInfo {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 16px;
+    border-radius: 6px;
+    background: var(--control-bg);
+    color: var(--muted-color);
+    font-size: 13px;
+    line-height: 1.6;
+
+    > .icon { margin-top: 3px; color: var(--primary-color); font-size: 18px; }
+    p { margin: 0; }
+    p + p { margin-top: 8px; }
+  }
+
+  .PrivateProfile-tabList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .PrivateProfile-tabOption {
+    padding: 12px 16px;
+    border: 1px solid var(--control-bg);
+    border-radius: 6px;
+    transition: border-color 150ms ease;
+
+    &:hover { border-color: var(--primary-color); }
+    .Form-group { margin: 0; }
+    .Checkbox { margin: 0; }
+  }
+
+  .PrivateProfile-emptyState {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--muted-color);
+
+    .icon { font-size: 32px; opacity: 0.5; }
+    p { margin: 12px 0 0; }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+
+    .PrivateProfile-supportTabs {
+      width: 100%;
+
+      > .Button { flex: 1; padding: 8px 10px; font-size: 13px; }
+    }
+    .PrivateProfile-actions { width: 100%; }
+    .PrivateProfile-settingsContent { padding: 16px; }
+    .PrivateProfile-tabList { grid-template-columns: 1fr; }
+  }
+}
