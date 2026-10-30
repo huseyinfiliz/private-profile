@@ -27,21 +27,32 @@ export default class TabDiscovery extends Component<Attrs> {
 
   private start() {
     clearTimeout(this.timer);
-    this.nonce = crypto.randomUUID();
+    this.nonce = "";
+    this.source = "";
     this.received = false;
     this.loading = true;
     this.failed = false;
-    const base = app.forum.attribute<string>("baseUrl").replace(/\/$/, "");
-    this.source = `${base}/u/${encodeURIComponent(app.session.user!.slug())}?privateProfileDiscovery=${this.nonce}`;
-    this.timer = setTimeout(() => {
+    try {
+      const bytes = crypto.getRandomValues(new Uint8Array(16));
+      this.nonce = Array.from(bytes, (byte) =>
+        byte.toString(16).padStart(2, "0"),
+      ).join("");
+      const base = app.forum.attribute<string>("baseUrl").replace(/\/$/, "");
+      this.source = `${base}/u/${encodeURIComponent(app.session.user!.slug())}?privateProfileDiscovery=${this.nonce}`;
+      this.timer = setTimeout(() => {
+        this.failed = true;
+        this.loading = false;
+        m.redraw();
+      }, 20000);
+    } catch {
       this.failed = true;
       this.loading = false;
-      m.redraw();
-    }, 20000);
+    }
   }
 
   private receive = async (event: MessageEvent) => {
     if (
+      !this.loading ||
       event.origin !== location.origin ||
       event.source !== this.frame?.contentWindow ||
       event.data?.type !== "private-profile.tabs" ||
