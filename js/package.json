@@ -4,6 +4,10 @@
   "license": "MIT",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "yarn@1.22.22",
+  "resolutions": {
+    "**/type-coverage-core/minimatch": "^11.0.1"
+  },
   "dependencies": {},
   "devDependencies": {
     "flarum-webpack-config": "^3.1.0",

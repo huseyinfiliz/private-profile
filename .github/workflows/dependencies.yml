@@ -1,0 +1,46 @@
+name: Private Profile dependency audit
+
+on:
+  push:
+    branches: [2.x]
+  pull_request:
+    branches: [2.x]
+  schedule:
+    - cron: '23 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  composer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+          extensions: curl, dom, gd, json, mbstring, openssl, pdo_sqlite, tokenizer, zip
+      - name: Resolve current dependencies
+        run: composer update --no-interaction --no-progress --prefer-dist
+      - name: Audit PHP dependencies
+        run: composer audit
+
+  yarn:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: js
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Enable the pinned Yarn release
+        run: corepack enable
+      - name: Install the committed dependency graph
+        run: yarn install --frozen-lockfile --non-interactive
+      - name: Audit JavaScript dependencies
+        run: yarn audit
