@@ -59,26 +59,4 @@ php flarum cache:clear
 - [Packagist](https://packagist.org/packages/huseyinfiliz/private-profile)
 - [GitHub](https://github.com/huseyinfiliz/private-profile)
 
-## Development and security checks
-
-Run `composer install`, `composer test`, and `composer audit` from the extension
-directory. Integration tests use a disposable Flarum database and roll back their
-fixtures. Never point the test setup at an installed forum database.
-
-The Trader Feedback regression job installs `huseyinfiliz/traderfeedback:^3.2`
-as a development dependency and runs
-`php tests/integration.php --isolated --with-trader-feedback`. This explicitly
-enables both extensions and fails when the integration dependency is missing.
-
-Use Node.js 24 and the pinned Yarn release for frontend development. From `js`,
-use `yarn install --frozen-lockfile`, `yarn format-check`,
-`yarn check-typings`, `yarn build`, and `yarn audit`. The scoped minimatch
-resolution keeps the optional type-coverage tool on the patched 11.x release
-until type-coverage-core supports that release in its dependency range.
-
-Dependabot checks Composer, Yarn, and GitHub Actions weekly. GitHub calls the
-Yarn ecosystem `npm`; all JavaScript installation and build commands use Yarn.
-The scheduled dependency workflow audits fresh PHP dependencies and the
-committed Yarn lockfile. See [SECURITY.md](SECURITY.md) for private reporting.
-
 Released under the [MIT license](LICENSE).
