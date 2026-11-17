@@ -2,7 +2,7 @@ name: Private Profile PHP
 
 on:
   push:
-    branches: [2.x]
+    branches: [2.x, 'dependabot/**']
   pull_request:
     branches: [2.x]
   workflow_dispatch:
