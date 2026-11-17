@@ -70,7 +70,8 @@ as a development dependency and runs
 `php tests/integration.php --isolated --with-trader-feedback`. This explicitly
 enables both extensions and fails when the integration dependency is missing.
 
-From `js`, use `yarn install --frozen-lockfile`, `yarn format-check`,
+Use Node.js 24 and the pinned Yarn release for frontend development. From `js`,
+use `yarn install --frozen-lockfile`, `yarn format-check`,
 `yarn check-typings`, `yarn build`, and `yarn audit`. The scoped minimatch
 resolution keeps the optional type-coverage tool on the patched 11.x release
 until type-coverage-core supports that release in its dependency range.
