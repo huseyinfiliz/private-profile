@@ -17,9 +17,16 @@ use huseyinfiliz\PrivateProfile\VisibilityResolver;
 
 if (in_array('--isolated', $argv ?? [], true)) {
     require __DIR__.'/bootstrap.php';
+    $extensions = ['huseyinfiliz-private-profile'];
+    if (in_array('--with-trader-feedback', $argv ?? [], true)) {
+        if (! class_exists(HuseyinFiliz\TraderFeedback\Models\Feedback::class)) {
+            throw new RuntimeException('Trader Feedback must be installed for the required integration scenarios.');
+        }
+        $extensions[] = 'huseyinfiliz-traderfeedback';
+    }
     $bootstrapper = new Flarum\Testing\integration\Setup\Bootstrapper(
         ['env' => 'testing'],
-        ['huseyinfiliz-private-profile']
+        $extensions
     );
     $container = $bootstrapper->run()->bootApp()->getContainer();
 } else {
@@ -74,7 +81,7 @@ try {
         $settings->set('huseyinfiliz-private-profile.hide_'.$tab, '1');
     }
     $users = [];
-    foreach (['owner', 'member', 'admin', 'bypass', 'legacy-bypass'] as $role) {
+    foreach (['owner', 'member', 'author', 'admin', 'bypass', 'legacy-bypass'] as $role) {
         $user = new User;
         $user->username = 'pp-test-'.bin2hex(random_bytes(6));
         $user->email = $user->username.'@example.invalid';
@@ -269,7 +276,7 @@ try {
     if ($response->getStatusCode() !== 404) {
         check($response->getStatusCode() === 403, 'Direct Trader Feedback stats URL protected');
     }
-    if (class_exists(HuseyinFiliz\Rewind\Model\RewindSnapshot::class)) {
+    if ($container->make(Flarum\Extension\ExtensionManager::class)->isEnabled('huseyinfiliz-rewind')) {
         $snapshot = new HuseyinFiliz\Rewind\Model\RewindSnapshot;
         $snapshot->fill(['user_id' => $owner->id, 'year' => 2025, 'data' => ['privateProfileFixture' => true],
             'generated_at' => Carbon\Carbon::now(), 'is_public' => true]);
@@ -285,10 +292,10 @@ try {
         check($document['data']['id'] === (string) $snapshot->id, 'Unselected Rewind tab retains its own access rules');
         $settings->set('huseyinfiliz-private-profile.hide_rewind', '1');
     }
-    if (class_exists(HuseyinFiliz\TraderFeedback\Models\Feedback::class)) {
+    if ($container->make(Flarum\Extension\ExtensionManager::class)->isEnabled('huseyinfiliz-traderfeedback')) {
         $feedback = new HuseyinFiliz\TraderFeedback\Models\Feedback;
-        $feedback->fill(['from_user_id' => $users['member']->id, 'to_user_id' => $owner->id,
-            'type' => 'positive', 'role' => 'buyer', 'comment' => 'Profile visibility integration fixture.', 'is_approved' => true]);
+        $feedback->fill(['from_user_id' => $users['author']->id, 'to_user_id' => $owner->id,
+            'type' => 'positive', 'role' => 'buyer', 'comment' => 'Private feedback security regression fixture.', 'is_approved' => true]);
         $feedback->save();
         $document = apiGet($users['admin'], '/trader/feedback/'.$feedback->id);
         check($document['data']['id'] === (string) $feedback->id, 'Feedback fixture exists and is readable by administrator');
@@ -296,6 +303,7 @@ try {
         check($response->getStatusCode() === 403, 'Direct feedback URL protected');
         $document = apiGet($users['member'], '/trader/feedback');
         check(! in_array((string) $feedback->id, array_column($document['data'], 'id'), true), 'Unfiltered feedback list removes restricted profile feedback');
+        require __DIR__.'/scenarios/feedback-privacy.php';
         $settings->set('huseyinfiliz-private-profile.hide_feedbacks', '0');
         $document = apiGet($users['member'], '/trader/feedback/'.$feedback->id);
         check($document['data']['id'] === (string) $feedback->id, 'Unselected feedback tab remains accessible');

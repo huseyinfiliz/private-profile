@@ -6,6 +6,7 @@ use Flarum\Http\RequestUtil;
 use Flarum\Http\SlugManager;
 use Flarum\User\Exception\PermissionDeniedException;
 use Flarum\User\User;
+use huseyinfiliz\PrivateProfile\Api\FeedbackPrivacyFilter;
 use huseyinfiliz\PrivateProfile\VisibilityResolver;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Arr;
@@ -27,8 +28,11 @@ class CheckUserPrivateStatus implements MiddlewareInterface
         'files.index' => ['user' => ['id', 'uploads']],
     ];
 
-    public function __construct(protected SlugManager $slugManager, protected VisibilityResolver $visibility)
-    {
+    public function __construct(
+        protected SlugManager $slugManager,
+        protected VisibilityResolver $visibility,
+        protected FeedbackPrivacyFilter $feedbackPrivacy
+    ) {
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -74,6 +78,12 @@ class CheckUserPrivateStatus implements MiddlewareInterface
         $body = json_decode((string) $response->getBody(), true);
         if (! is_array($body) || ! isset($body['data'])) {
             return $response;
+        }
+
+        $filtered = $this->feedbackPrivacy->filter($body, $actor);
+        if ($filtered !== $body) {
+            $body = $filtered;
+            $response = $this->response($response, $body);
         }
 
         // Also filter unscoped lists and direct resource URLs in supported integrations.
